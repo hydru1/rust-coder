@@ -53,3 +53,107 @@ fn main() {
 ```
 
 [ポインタを出力したい](./as_raw_bytes.rs)
+
+### パターンマッチ
+
+パターンマッチもできる(`copied`の型は`reference`と同じ)
+```Rust
+fn main() {
+    let hoge = 10;
+    let reference = &hoge;
+    let &copied = reference;
+    assert_eq!(copied, 10);
+    println!("{:p}", &reference);
+    println!("{:p}", &copied);
+}
+```
+
+### シャドーイング
+元の変数をシャドーイングしても、参照を通したアクセスは変化しない。
+```Rust
+fn main() {
+    let hoge = 10;
+    let reference = &hoge;
+    let hoge = 20;
+    assert_eq!(hoge, 20);
+    assert_eq!(*reference, 10);
+}
+```
+
+## 未初期化の変数の借用
+```Rust
+fn main() {
+    let hoge;;
+    let reference = &hoge; // Error!
+    println!("{}", reference);
+    hoge = 100;
+}
+```
+
+条件によって初期化されないパターンもコンパイラが検知してくれる
+```Rust
+use proconio::input;
+
+fn main() {
+    let hoge;
+    input! {
+        n: i32,
+    }
+    if n > 0 {
+        hoge = 0;
+    }
+    let reference = &hoge;
+}
+```
+
+## ライフタイム
+
+```Rust
+fn main() {
+    let hoge = 100;
+    let reference = &hoge; // 借用: ライフタイムの開始
+    println!("{}", *reference); // 最後の使用: ライフタイムの終了
+}
+```
+
+参照元の変数のライフタイムが切れているとエラーになる
+```Rust
+fn main() {
+    let reference;
+    {
+        let hoge = 100;
+        reference = &hoge;
+    } // hogeのスコープ終了
+    println!("{}", *reference); // ライフタイムが終了した&hogeの使用
+}
+```
+
+## 一時変数の借用
+```Rust
+fn main() {
+    let hoge = 50;
+    let reference = &(hoge + 30);
+    println!("{}", reference);
+}
+```
+
+## 静的なライフタイム
+リテラルも借用可能
+```Rust
+fn main() {
+    let reference = &100;
+    println!("{:p}", reference);
+    assert_eq!(*reference, 100);
+}
+```
+
+`&100`はstaticなライフタイムを持つ
+```Rust
+fn main() {
+    let reference;
+    {
+        reference = &100;
+    }
+    assert_eq!(*reference, 100);
+}
+```
